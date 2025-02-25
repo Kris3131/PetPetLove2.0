@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import connectDB from './config/db';
+
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
 
@@ -14,10 +17,13 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Pet App Backend is running!' });
-});
+app.use('/api/auth', authRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, async () => {
+  try {
+    await connectDB();
+    console.log(`Server running on http://localhost:${PORT}`);
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+  }
 });
