@@ -6,7 +6,6 @@ export interface IUser extends mongoose.Document {
   email: string;
   password: string;
   role: 'user' | 'admin';
-  blockedUsers: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword: (enteredPassword: string) => Promise<boolean>;
@@ -18,11 +17,10 @@ const UserSchema = new mongoose.Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true, collection: 'user' }
+  { timestamps: true, collection: 'users' }
 );
 
 UserSchema.pre('save', async function (next) {
@@ -36,5 +34,5 @@ UserSchema.methods.comparePassword = async function (enteredPassword: string) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.model<IUser>('User', UserSchema, 'users');
 export default User;
