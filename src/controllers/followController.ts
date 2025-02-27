@@ -60,7 +60,7 @@ export const getFollowers = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const followers = await Follow.find({ following: userId }).populate(
       'follower',
-      'username avatar'
+      'username'
     );
     res.json(followers);
   } catch (error) {
@@ -74,7 +74,7 @@ export const getFollowing = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const following = await Follow.find({ follower: userId }).populate(
       'following',
-      'username avatar'
+      'username'
     );
     res.json(following);
   } catch (error) {
