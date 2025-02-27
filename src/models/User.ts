@@ -6,8 +6,6 @@ export interface IUser extends mongoose.Document {
   email: string;
   password: string;
   role: 'user' | 'admin';
-  followers: mongoose.Types.ObjectId[];
-  following: mongoose.Types.ObjectId[];
   blockedUsers: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -20,13 +18,11 @@ const UserSchema = new mongoose.Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'user' }
 );
 
 UserSchema.pre('save', async function (next) {

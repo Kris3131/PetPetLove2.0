@@ -35,7 +35,7 @@ module.exports = {
       },
     });
 
-    await db.collection('users').createIndex({ email: 1 }, { unique: true });
+    await db.collection('user').createIndex({ email: 1 }, { unique: true });
 
     console.log('[migrate-mongo] users Collection has been created');
   },
