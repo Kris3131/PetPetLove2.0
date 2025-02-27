@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import connectDB from './config/db';
 
 import authRoutes from './routes/authRoutes';
-
+import followRoutes from './routes/followRoutes';
 dotenv.config();
 
 const app = express();
@@ -18,7 +18,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
-
+app.use('/api/follow', followRoutes);
 app.listen(PORT, async () => {
   try {
     await connectDB();
