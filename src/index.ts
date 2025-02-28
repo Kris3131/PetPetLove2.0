@@ -7,6 +7,7 @@ import connectDB from './config/db';
 
 import authRoutes from './routes/authRoutes';
 import followRoutes from './routes/followRoutes';
+import blockRoutes from './routes/blockRoutes';
 dotenv.config();
 
 const app = express();
@@ -19,6 +20,8 @@ app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/follow', followRoutes);
+app.use('/api/block', blockRoutes);
+
 app.listen(PORT, async () => {
   try {
     await connectDB();

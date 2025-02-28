@@ -1,6 +1,6 @@
 module.exports = {
   async up(db) {
-    await db.createCollection('user', {
+    await db.createCollection('users', {
       validator: {
         $jsonSchema: {
           bsonType: 'object',
@@ -35,13 +35,13 @@ module.exports = {
       },
     });
 
-    await db.collection('user').createIndex({ email: 1 }, { unique: true });
+    await db.collection('users').createIndex({ email: 1 }, { unique: true });
 
     console.log('[migrate-mongo] users Collection has been created');
   },
 
   async down(db) {
-    await db.collection('user').drop();
-    console.log('[migrate-mongo] user Collection has been dropped');
+    await db.collection('users').drop();
+    console.log('[migrate-mongo] users Collection has been dropped');
   },
 };
