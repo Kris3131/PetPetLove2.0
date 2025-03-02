@@ -1,17 +1,18 @@
-import express from 'express';
-import http from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
-import dotenv from 'dotenv';
 import cors from 'cors';
+import { config } from 'dotenv';
+import express from 'express';
 import helmet from 'helmet';
+import http from 'http';
 import morgan from 'morgan';
+import { WebSocket, WebSocketServer } from 'ws';
+
 import connectDB from './config/db';
+import authRoutes from './routes/authRoutes';
+import blockRoutes from './routes/blockRoutes';
+import followRoutes from './routes/followRoutes';
 import { webSocketManager } from './utils/websocket';
 
-import authRoutes from './routes/authRoutes';
-import followRoutes from './routes/followRoutes';
-import blockRoutes from './routes/blockRoutes';
-dotenv.config();
+config();
 
 const app = express();
 const server = http.createServer(app);
@@ -56,7 +57,7 @@ wss.on('connection', (ws: WebSocket) => {
         );
       }
     } catch (error) {
-      console.error('[WebSocket] Error processing message:', error);
+      console.error(`[WebSocket] Error processing message: ${error}`);
     }
   });
 
@@ -80,6 +81,6 @@ server.listen(PORT, async () => {
     await connectDB();
     console.log(`Server running on http://localhost:${PORT}`);
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    console.error(`Failed to connect to MongoDB: ${error}`);
   }
 });

@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { Request, RequestHandler,Response  } from 'express';
+import { WebSocket } from 'ws';
+
 import Follow from '../models/Follow';
 import Notification from '../models/Notification';
-import { RequestHandler } from 'express';
-import { WebSocket } from 'ws';
 import { webSocketManager } from '../utils/websocket';
 
 export const followUser: RequestHandler = async (req, res) => {

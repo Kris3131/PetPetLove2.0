@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import jwt from 'jsonwebtoken';
-import User, { IUser } from '../models/User';
 import dotenv from 'dotenv';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
+import jwt from 'jsonwebtoken';
+
+import User, { IUser } from '../models/User';
 
 dotenv.config();
 
@@ -10,7 +11,7 @@ export const protect: RequestHandler = async (
   res: Response,
   next: NextFunction
 ) => {
-  let token = req.headers.authorization?.split(' ')[1];
+  const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
     res.status(401).json({ message: '[auth] Unauthorized' });

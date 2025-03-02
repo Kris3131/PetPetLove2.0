@@ -1,9 +1,10 @@
+import { config } from 'dotenv';
 import { RequestHandler } from 'express';
-import User from '../models/User';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import dotenv from 'dotenv';
 
-dotenv.config();
+import User from '../models/User';
+
+config();
 
 const generateToken = (id: string) => {
   const options: SignOptions = {

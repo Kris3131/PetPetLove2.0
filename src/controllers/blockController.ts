@@ -1,7 +1,6 @@
-import { Request, Response } from 'express';
-import Block from '../models/Block';
+import { Request, RequestHandler,Response  } from 'express';
 
-import { RequestHandler } from 'express';
+import Block from '../models/Block';
 
 export const blockUser: RequestHandler = async (
   req: Request,

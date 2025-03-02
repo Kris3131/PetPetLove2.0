@@ -1,9 +1,10 @@
 import express from 'express';
+
 import {
   followUser,
-  unfollowUser,
   getFollowers,
   getFollowing,
+  unfollowUser,
 } from '../controllers/followController';
 import { protect } from '../middleware/authMiddleware';
 
