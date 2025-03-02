@@ -45,13 +45,21 @@ export const loginUser: RequestHandler = async (req, res) => {
       return;
     }
 
-    res.json({
-      _id: user.id,
-      username: user.username,
-      email: user.email,
-      token: generateToken(user.id),
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
+      expiresIn: '1d',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      userId: user._id,
     });
   } catch (error) {
-    res.status(500).json({ message: `[auth] Server error: ${error}` });
+    res.status(500).json({
+      success: false,
+      message: 'Login failed',
+      error: (error as Error).message,
+    });
   }
 };
