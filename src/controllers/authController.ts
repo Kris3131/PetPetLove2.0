@@ -1,9 +1,12 @@
 import { config } from 'dotenv';
 import { RequestHandler } from 'express';
 import { sign, SignOptions } from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
+import { HTTP_STATUS } from '../constants/httpStatus';
 import User from '../models/User';
 import logger from '../utils/logger';
+import { errorResponse, successResponse } from '../utils/response';
 
 config();
 
@@ -21,53 +24,49 @@ export const registerUser: RequestHandler = async (req, res) => {
 
     if (userExists) {
       logger.error(`[AUTH] Email already exists: ${email}`);
-      res.status(400).json({ message: '[auth] Email already exists' });
+      errorResponse(res, HTTP_STATUS.BAD_REQUEST, 'Email already exists');
       return;
     }
 
     const user = await User.create({ username, email, password });
 
-    res.status(201).json({
+    logger.info(`[AUTH] User registered: ${user.id}`);
+    successResponse(res, HTTP_STATUS.CREATED, 'User registered', {
       _id: user.id,
       username: user.username,
       email: user.email,
       token: generateToken(user.id),
     });
-    logger.info(`[AUTH] User registered: ${user.id}`);
   } catch (error) {
     logger.error(`[AUTH] Server error: ${error}`);
-    res.status(500).json({ message: `[auth] Server error: ${error}` });
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
   }
 };
 
 export const loginUser: RequestHandler = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).lean();
 
-    if (!user || !(await user.comparePassword(password))) {
+    if (
+      !user ||
+      !(await User.schema.methods.comparePassword.call(user, password))
+    ) {
       logger.error(`[AUTH] Email or password error: ${email}`);
-      res.status(401).json({ message: '[auth] Email or password error' });
+      errorResponse(res, HTTP_STATUS.UNAUTHORIZED, 'Email or password error');
       return;
     }
 
-    const token = sign({ userId: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: '1d',
-    });
+    const userId = (user._id as mongoose.Types.ObjectId).toString();
+    const token = generateToken(userId);
 
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
+    logger.info(`[AUTH] Login successful: ${userId}`);
+    successResponse(res, HTTP_STATUS.OK, 'Login successful', {
       token,
-      userId: user._id,
+      userId,
     });
-    logger.info(`[AUTH] Login successful: ${user._id}`);
   } catch (error) {
     logger.error(`[AUTH] Login failed: ${error}`);
-    res.status(500).json({
-      success: false,
-      message: 'Login failed',
-      error: (error as Error).message,
-    });
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Login failed');
   }
 };

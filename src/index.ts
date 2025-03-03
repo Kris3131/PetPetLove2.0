@@ -8,6 +8,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 import connectDB from './config/db';
 import { requestLogger } from './middleware/loggerMiddleware';
+import { responseMiddleware } from './middleware/responseMiddleware';
 import authRoutes from './routes/authRoutes';
 import blockRoutes from './routes/blockRoutes';
 import followRoutes from './routes/followRoutes';
@@ -35,7 +36,7 @@ wss.on('connection', (ws: WebSocket) => {
       if (data.type === 'register' && data.userId) {
         console.log(`[WebSocket] Registering client: ${data.userId}`);
         webSocketManager.registerClient(data.userId, ws);
-        webSocketManager.dumpClientIds(); // 打印所有已註冊的客戶端
+        webSocketManager.dumpClientIds();
 
         // 發送確認消息回客戶端
         ws.send(
@@ -74,6 +75,8 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(requestLogger);
+app.use(responseMiddleware);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/block', blockRoutes);

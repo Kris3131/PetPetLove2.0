@@ -1,12 +1,14 @@
-import { Request, RequestHandler, Response } from 'express';
+import { RequestHandler } from 'express';
 import { WebSocket } from 'ws';
 
+import { HTTP_STATUS } from '../constants/httpStatus';
 import Follow from '../models/Follow';
 import Notification from '../models/Notification';
 import logger from '../utils/logger';
+import { errorResponse, successResponse } from '../utils/response';
 import { webSocketManager } from '../utils/websocket';
 
-export const followUser: RequestHandler = async (req, res) => {
+export const followUser: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const followerId = req.user.id;
@@ -28,7 +30,7 @@ export const followUser: RequestHandler = async (req, res) => {
       logger.error(
         `[FOLLOW] Cannot follow yourself: ${followerId} -> ${userId}`
       );
-      res.status(400).json({ message: '[FOLLOW] Cannot follow yourself' });
+      errorResponse(res, HTTP_STATUS.BAD_REQUEST, 'Cannot follow yourself');
       return;
     }
 
@@ -39,7 +41,7 @@ export const followUser: RequestHandler = async (req, res) => {
 
     if (existingFollow) {
       logger.error(`[FOLLOW] Already followed: ${followerId} -> ${userId}`);
-      res.status(400).json({ message: '[FOLLOW] Already followed' });
+      errorResponse(res, HTTP_STATUS.BAD_REQUEST, 'Already followed');
       return;
     }
 
@@ -59,14 +61,14 @@ export const followUser: RequestHandler = async (req, res) => {
         })
       );
     }
-    res.status(201).json({ message: '[follow] Successfully followed' });
+    successResponse(res, HTTP_STATUS.CREATED, 'Successfully followed');
   } catch (error) {
     logger.error(`[FOLLOW] Server error: ${error}`);
-    res.status(500).json({ message: '[FOLLOW] Server error' });
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
   }
 };
 
-export const unfollowUser = async (req: Request, res: Response) => {
+export const unfollowUser: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const followerId = req.user.id;
@@ -77,46 +79,43 @@ export const unfollowUser = async (req: Request, res: Response) => {
     });
     if (!existingFollow) {
       logger.error(`[FOLLOW] Not following: ${followerId} -> ${userId}`);
-      res.status(400).json({ message: '[FOLLOW] Not following' });
+      errorResponse(res, HTTP_STATUS.BAD_REQUEST, 'Not following');
       return;
     }
 
     await Follow.deleteOne({ follower: followerId, following: userId });
 
-    res.status(200).json({ message: '[FOLLOW] Successfully unfollowed' });
-    return;
+    successResponse(res, HTTP_STATUS.OK, 'Successfully unfollowed');
   } catch (error) {
     logger.error(`[FOLLOW] Server error: ${error}`);
-    res.status(500).json({ message: '[FOLLOW] Server error' });
-    return;
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
   }
 };
 
-export const getFollowers = async (req: Request, res: Response) => {
+export const getFollowers: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const followers = await Follow.find({ following: userId }).populate(
       'follower',
       'username'
     );
-    res.json(followers);
+    successResponse(res, HTTP_STATUS.OK, 'Followers', followers);
   } catch (error) {
     logger.error(`[FOLLOW] Server error: ${error}`);
-    res.status(500).json({ message: '[FOLLOW] Server error' });
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
   }
 };
 
-// 取得某用戶的關注清單
-export const getFollowing = async (req: Request, res: Response) => {
+export const getFollowing: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const following = await Follow.find({ follower: userId }).populate(
       'following',
       'username'
     );
-    res.json(following);
+    successResponse(res, HTTP_STATUS.OK, 'Following', following);
   } catch (error) {
     logger.error(`[FOLLOW] Server error: ${error}`);
-    res.status(500).json({ message: '[FOLLOW] Server error' });
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
   }
 };
