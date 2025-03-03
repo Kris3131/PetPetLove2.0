@@ -1,13 +1,14 @@
-import express from 'express';
+import { Router } from 'express';
+
 import {
   blockUser,
-  unblockUser,
   getBlockedUsers,
   isBlocked,
+  unblockUser,
 } from '../controllers/blockController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.post('/:userId/block', protect, blockUser);
 router.delete('/:userId/unblock', protect, unblockUser);

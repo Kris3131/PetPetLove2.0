@@ -1,17 +1,21 @@
-import express from 'express';
-import http from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
-import dotenv from 'dotenv';
 import cors from 'cors';
+import { config } from 'dotenv';
+import express, { json } from 'express';
 import helmet from 'helmet';
+import http from 'http';
 import morgan from 'morgan';
+import { WebSocket, WebSocketServer } from 'ws';
+
 import connectDB from './config/db';
+import { requestLogger } from './middleware/loggerMiddleware';
+import { responseMiddleware } from './middleware/responseMiddleware';
+import authRoutes from './routes/authRoutes';
+import blockRoutes from './routes/blockRoutes';
+import followRoutes from './routes/followRoutes';
+import logger from './utils/logger';
 import { webSocketManager } from './utils/websocket';
 
-import authRoutes from './routes/authRoutes';
-import followRoutes from './routes/followRoutes';
-import blockRoutes from './routes/blockRoutes';
-dotenv.config();
+config();
 
 const app = express();
 const server = http.createServer(app);
@@ -32,7 +36,7 @@ wss.on('connection', (ws: WebSocket) => {
       if (data.type === 'register' && data.userId) {
         console.log(`[WebSocket] Registering client: ${data.userId}`);
         webSocketManager.registerClient(data.userId, ws);
-        webSocketManager.dumpClientIds(); // 打印所有已註冊的客戶端
+        webSocketManager.dumpClientIds();
 
         // 發送確認消息回客戶端
         ws.send(
@@ -56,7 +60,7 @@ wss.on('connection', (ws: WebSocket) => {
         );
       }
     } catch (error) {
-      console.error('[WebSocket] Error processing message:', error);
+      console.error(`[WebSocket] Error processing message: ${error}`);
     }
   });
 
@@ -66,10 +70,12 @@ wss.on('connection', (ws: WebSocket) => {
   });
 });
 
-app.use(express.json());
+app.use(json());
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
+app.use(requestLogger);
+app.use(responseMiddleware);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/follow', followRoutes);
@@ -78,8 +84,8 @@ app.use('/api/block', blockRoutes);
 server.listen(PORT, async () => {
   try {
     await connectDB();
-    console.log(`Server running on http://localhost:${PORT}`);
+    logger.info(`Server running on http://localhost:${PORT}`);
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    logger.error(`[DB]Failed to connect to MongoDB: ${error}`);
   }
 });

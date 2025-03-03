@@ -1,5 +1,5 @@
+import { compare, genSalt, hash } from 'bcrypt';
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
 
 export interface IUser extends mongoose.Document {
   username: string;
@@ -25,13 +25,13 @@ const UserSchema = new mongoose.Schema<IUser>(
 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  const salt = await genSalt(10);
+  this.password = await hash(this.password, salt);
   next();
 });
 
 UserSchema.methods.comparePassword = async function (enteredPassword: string) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return await compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model<IUser>('User', UserSchema, 'users');

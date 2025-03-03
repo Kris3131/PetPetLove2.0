@@ -1,11 +1,13 @@
 import { WebSocket } from 'ws';
 
+import logger from './logger';
+
 class WebSocketManager {
   private clients = new Map<string, WebSocket>();
 
   registerClient(userId: string, ws: WebSocket): void {
     this.clients.set(userId, ws);
-    console.log(`WebSocket: User ${userId} registered`);
+    logger.info(`[WebSocket]: User ${userId} registered`);
   }
 
   getClient(userId: string): WebSocket | undefined {
@@ -15,7 +17,7 @@ class WebSocketManager {
   removeClient(userId: string): boolean {
     const result = this.clients.delete(userId);
     if (result) {
-      console.log(`WebSocket: User ${userId} unregistered`);
+      logger.info(`[WebSocket]: User ${userId} unregistered`);
     }
     return result;
   }
@@ -52,9 +54,9 @@ class WebSocketManager {
   }
 
   dumpClientIds(): void {
-    console.log('[WebSocket] All registered client IDs:');
+    logger.info('[WebSocket] All registered client IDs:');
     this.clients.forEach((_, id) => {
-      console.log(`- ${id}`);
+      logger.info(`- ${id}`);
     });
   }
 }

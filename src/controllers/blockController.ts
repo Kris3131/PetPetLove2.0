@@ -1,19 +1,18 @@
-import { Request, Response } from 'express';
-import Block from '../models/Block';
-
 import { RequestHandler } from 'express';
 
-export const blockUser: RequestHandler = async (
-  req: Request,
-  res: Response
-) => {
+import { HTTP_STATUS } from '../constants/httpStatus';
+import Block from '../models/Block';
+import logger from '../utils/logger';
+import { errorResponse, successResponse } from '../utils/response';
+
+export const blockUser: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const blockerId = req.user.id;
 
     if (userId === blockerId) {
-      res.status(400).json({ message: '[Block] You cannot block yourself' });
-      return;
+      logger.error(`[BLOCK] Cannot block yourself: ${blockerId} -> ${userId}`);
+      errorResponse(res, HTTP_STATUS.BAD_REQUEST, 'You cannot block yourself');
     }
 
     const existingBlock = await Block.findOne({
@@ -21,23 +20,29 @@ export const blockUser: RequestHandler = async (
       blocked: userId,
     });
     if (existingBlock) {
-      res
-        .status(400)
-        .json({ message: '[Block] You have already blocked this user' });
-      return;
+      logger.error(
+        `[BLOCK] You have already blocked this user: ${blockerId} -> ${userId}`
+      );
+      errorResponse(
+        res,
+        HTTP_STATUS.BAD_REQUEST,
+        'You have already blocked this user'
+      );
     }
 
     await Block.create({ blocker: blockerId, blocked: userId });
-    res.status(201).json({ message: '[Block] Successfully blocked the user' });
+    logger.info(
+      `[BLOCK] Successfully blocked the user: ${blockerId} -> ${userId}`
+    );
+    successResponse(res, HTTP_STATUS.CREATED, 'Successfully blocked the user');
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
+    return;
   }
 };
 
-export const unblockUser: RequestHandler = async (
-  req: Request,
-  res: Response
-) => {
+export const unblockUser: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const blockerId = req.user.id;
@@ -47,46 +52,56 @@ export const unblockUser: RequestHandler = async (
       blocked: userId,
     });
     if (!existingBlock) {
-      res.status(400).json({ message: '[Block] This user is not blocked' });
-      return;
+      logger.error(
+        `[BLOCK] This user is not blocked: ${blockerId} -> ${userId}`
+      );
+      errorResponse(res, HTTP_STATUS.BAD_REQUEST, 'This user is not blocked');
     }
 
     await Block.deleteOne({ blocker: blockerId, blocked: userId });
-    res
-      .status(200)
-      .json({ message: '[Block] Successfully unblocked the user' });
+    logger.info(
+      `[BLOCK] Successfully unblocked the user: ${blockerId} -> ${userId}`
+    );
+    successResponse(res, HTTP_STATUS.OK, 'Successfully unblocked the user');
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
+    return;
   }
 };
 
 export const getBlockedUsers: RequestHandler = async (
-  req: Request,
-  res: Response
-) => {
+  req,
+  res
+): Promise<void> => {
   try {
     const blockerId = req.user.id;
     const blockedUsers = await Block.find({ blocker: blockerId }).populate(
       'blocked',
       'username avatar'
     );
-    res.json(blockedUsers);
+    logger.info(`[BLOCK] Blocked users: ${blockedUsers}`);
+    successResponse(res, HTTP_STATUS.OK, 'Blocked users', blockedUsers);
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
+    return;
   }
 };
 
-export const isBlocked: RequestHandler = async (
-  req: Request,
-  res: Response
-) => {
+export const isBlocked: RequestHandler = async (req, res): Promise<void> => {
   try {
     const { userId } = req.params;
     const blockerId = req.user.id;
 
     const block = await Block.findOne({ blocker: blockerId, blocked: userId });
-    res.json({ blocked: !!block });
+    logger.info(`[BLOCK] Is blocked: ${blockerId} -> ${userId} ${!!block}`);
+    successResponse(res, HTTP_STATUS.OK, 'Is blocked', {
+      blocked: !!block,
+    });
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    errorResponse(res, HTTP_STATUS.INTERNAL_SERVER_ERROR, 'Server error');
+    return;
   }
 };
