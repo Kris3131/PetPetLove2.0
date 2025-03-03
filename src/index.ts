@@ -1,15 +1,17 @@
 import cors from 'cors';
 import { config } from 'dotenv';
-import express from 'express';
+import express, { json } from 'express';
 import helmet from 'helmet';
 import http from 'http';
 import morgan from 'morgan';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import connectDB from './config/db';
+import { requestLogger } from './middleware/loggerMiddleware';
 import authRoutes from './routes/authRoutes';
 import blockRoutes from './routes/blockRoutes';
 import followRoutes from './routes/followRoutes';
+import logger from './utils/logger';
 import { webSocketManager } from './utils/websocket';
 
 config();
@@ -67,11 +69,11 @@ wss.on('connection', (ws: WebSocket) => {
   });
 });
 
-app.use(express.json());
+app.use(json());
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
-
+app.use(requestLogger);
 app.use('/api/auth', authRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/block', blockRoutes);
@@ -79,8 +81,8 @@ app.use('/api/block', blockRoutes);
 server.listen(PORT, async () => {
   try {
     await connectDB();
-    console.log(`Server running on http://localhost:${PORT}`);
+    logger.info(`Server running on http://localhost:${PORT}`);
   } catch (error) {
-    console.error(`Failed to connect to MongoDB: ${error}`);
+    logger.error(`[DB]Failed to connect to MongoDB: ${error}`);
   }
 });

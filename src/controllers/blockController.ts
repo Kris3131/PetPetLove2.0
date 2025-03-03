@@ -1,6 +1,7 @@
-import { Request, RequestHandler,Response  } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 
 import Block from '../models/Block';
+import logger from '../utils/logger';
 
 export const blockUser: RequestHandler = async (
   req: Request,
@@ -11,6 +12,7 @@ export const blockUser: RequestHandler = async (
     const blockerId = req.user.id;
 
     if (userId === blockerId) {
+      logger.error(`[BLOCK] Cannot block yourself: ${blockerId} -> ${userId}`);
       res.status(400).json({ message: '[Block] You cannot block yourself' });
       return;
     }
@@ -20,16 +22,23 @@ export const blockUser: RequestHandler = async (
       blocked: userId,
     });
     if (existingBlock) {
+      logger.error(
+        `[BLOCK] You have already blocked this user: ${blockerId} -> ${userId}`
+      );
       res
         .status(400)
-        .json({ message: '[Block] You have already blocked this user' });
+        .json({ message: '[BLOCK] You have already blocked this user' });
       return;
     }
 
     await Block.create({ blocker: blockerId, blocked: userId });
-    res.status(201).json({ message: '[Block] Successfully blocked the user' });
+    logger.info(
+      `[BLOCK] Successfully blocked the user: ${blockerId} -> ${userId}`
+    );
+    res.status(201).json({ message: '[BLOCK] Successfully blocked the user' });
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    res.status(500).json({ message: `[BLOCK] ${error}` });
   }
 };
 
@@ -46,16 +55,23 @@ export const unblockUser: RequestHandler = async (
       blocked: userId,
     });
     if (!existingBlock) {
-      res.status(400).json({ message: '[Block] This user is not blocked' });
+      logger.error(
+        `[BLOCK] This user is not blocked: ${blockerId} -> ${userId}`
+      );
+      res.status(400).json({ message: '[BLOCK] This user is not blocked' });
       return;
     }
 
     await Block.deleteOne({ blocker: blockerId, blocked: userId });
+    logger.info(
+      `[BLOCK] Successfully unblocked the user: ${blockerId} -> ${userId}`
+    );
     res
       .status(200)
-      .json({ message: '[Block] Successfully unblocked the user' });
+      .json({ message: '[BLOCK] Successfully unblocked the user' });
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    res.status(500).json({ message: `[BLOCK] ${error}` });
   }
 };
 
@@ -69,9 +85,11 @@ export const getBlockedUsers: RequestHandler = async (
       'blocked',
       'username avatar'
     );
+    logger.info(`[BLOCK] Blocked users: ${blockedUsers}`);
     res.json(blockedUsers);
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    res.status(500).json({ message: `[BLOCK] ${error}` });
   }
 };
 
@@ -84,8 +102,10 @@ export const isBlocked: RequestHandler = async (
     const blockerId = req.user.id;
 
     const block = await Block.findOne({ blocker: blockerId, blocked: userId });
+    logger.info(`[BLOCK] Is blocked: ${blockerId} -> ${userId} ${!!block}`);
     res.json({ blocked: !!block });
   } catch (error) {
-    res.status(500).json({ message: '[Block] Server error' });
+    logger.error(`[BLOCK] Server error: ${error}`);
+    res.status(500).json({ message: `[BLOCK] ${error}` });
   }
 };

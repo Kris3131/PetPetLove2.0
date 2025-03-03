@@ -1,6 +1,8 @@
 import { config } from 'dotenv';
 import mongoose from 'mongoose';
 
+import logger from '../utils/logger';
+
 config();
 
 const MONGO_URL = process.env.MONGO_URL as string;
@@ -12,9 +14,9 @@ const connectDB = async () => {
       ssl: true,
       dbName: DATABASE_NAME,
     });
-    console.log('[db] MongoDB Connected');
+    logger.info('[DB] MongoDB Connected');
   } catch (error) {
-    console.error(`[db] MongoDB Connection Error: ${error}`);
+    logger.error(`[DB] MongoDB Connection Error: ${error}`);
     process.exit(1);
   }
 };

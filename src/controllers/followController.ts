@@ -1,8 +1,9 @@
-import { Request, RequestHandler,Response  } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import { WebSocket } from 'ws';
 
 import Follow from '../models/Follow';
 import Notification from '../models/Notification';
+import logger from '../utils/logger';
 import { webSocketManager } from '../utils/websocket';
 
 export const followUser: RequestHandler = async (req, res) => {
@@ -10,21 +11,24 @@ export const followUser: RequestHandler = async (req, res) => {
     const { userId } = req.params;
     const followerId = req.user.id;
 
-    console.log(
-      `[Follow] Processing follow request: ${followerId} -> ${userId}`
+    logger.info(
+      `[FOLLOW] Processing follow request: ${followerId} -> ${userId}`
     );
 
     // 檢查 userId 是否與 WebSocket 註冊的一致
-    console.log(
-      `[Follow] Connected clients: ${
+    logger.info(
+      `[FOLLOW] Connected clients: ${
         webSocketManager.getConnectedClientIds?.() || 'method not available'
       }`
     );
     const ws = webSocketManager.getClient(userId);
-    console.log(`[Follow] Found WebSocket for ${userId}: ${!!ws}`);
+    logger.info(`[FOLLOW] Found WebSocket for ${userId}: ${!!ws}`);
 
     if (userId === followerId) {
-      res.status(400).json({ message: '[follow] Cannot follow yourself' });
+      logger.error(
+        `[FOLLOW] Cannot follow yourself: ${followerId} -> ${userId}`
+      );
+      res.status(400).json({ message: '[FOLLOW] Cannot follow yourself' });
       return;
     }
 
@@ -34,7 +38,8 @@ export const followUser: RequestHandler = async (req, res) => {
     });
 
     if (existingFollow) {
-      res.status(400).json({ message: '[follow] Already followed' });
+      logger.error(`[FOLLOW] Already followed: ${followerId} -> ${userId}`);
+      res.status(400).json({ message: '[FOLLOW] Already followed' });
       return;
     }
 
@@ -56,7 +61,8 @@ export const followUser: RequestHandler = async (req, res) => {
     }
     res.status(201).json({ message: '[follow] Successfully followed' });
   } catch (error) {
-    res.status(500).json({ message: '[follow] Server error' });
+    logger.error(`[FOLLOW] Server error: ${error}`);
+    res.status(500).json({ message: '[FOLLOW] Server error' });
   }
 };
 
@@ -70,16 +76,18 @@ export const unfollowUser = async (req: Request, res: Response) => {
       following: userId,
     });
     if (!existingFollow) {
-      res.status(400).json({ message: '[follow] Not following' });
+      logger.error(`[FOLLOW] Not following: ${followerId} -> ${userId}`);
+      res.status(400).json({ message: '[FOLLOW] Not following' });
       return;
     }
 
     await Follow.deleteOne({ follower: followerId, following: userId });
 
-    res.status(200).json({ message: '[follow] Successfully unfollowed' });
+    res.status(200).json({ message: '[FOLLOW] Successfully unfollowed' });
     return;
   } catch (error) {
-    res.status(500).json({ message: '[follow] Server error' });
+    logger.error(`[FOLLOW] Server error: ${error}`);
+    res.status(500).json({ message: '[FOLLOW] Server error' });
     return;
   }
 };
@@ -93,7 +101,8 @@ export const getFollowers = async (req: Request, res: Response) => {
     );
     res.json(followers);
   } catch (error) {
-    res.status(500).json({ message: '[follow] Server error' });
+    logger.error(`[FOLLOW] Server error: ${error}`);
+    res.status(500).json({ message: '[FOLLOW] Server error' });
   }
 };
 
@@ -107,6 +116,7 @@ export const getFollowing = async (req: Request, res: Response) => {
     );
     res.json(following);
   } catch (error) {
-    res.status(500).json({ message: '[follow] Server error' });
+    logger.error(`[FOLLOW] Server error: ${error}`);
+    res.status(500).json({ message: '[FOLLOW] Server error' });
   }
 };

@@ -1,10 +1,11 @@
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 import { NextFunction, Request, RequestHandler, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { verify } from 'jsonwebtoken';
 
 import User, { IUser } from '../models/User';
+import logger from '../utils/logger';
 
-dotenv.config();
+config();
 
 export const protect: RequestHandler = async (
   req: Request,
@@ -14,18 +15,22 @@ export const protect: RequestHandler = async (
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    res.status(401).json({ message: '[auth] Unauthorized' });
+    logger.error(`[AUTH] Unauthorized: ${req.headers.authorization}`);
+    res.status(401).json({ message: '[AUTH] Unauthorized' });
     return;
   }
 
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
+    const decoded = verify(token, process.env.JWT_SECRET as string) as {
+      id: string;
+    };
     const userData = (await User.findById(decoded.id).select(
       '-password'
     )) as IUser;
 
     if (!userData) {
-      res.status(401).json({ message: '[auth] Invalid token' });
+      logger.error(`[AUTH] Invalid token: ${token}`);
+      res.status(401).json({ message: '[AUTH] Invalid token' });
       return;
     }
 
@@ -33,7 +38,8 @@ export const protect: RequestHandler = async (
     req.user = { id: user._id.toString(), ...user };
     next();
   } catch (error) {
-    res.status(401).json({ message: '[auth] Invalid token' });
+    logger.error(`[AUTH] Invalid token: ${error}`);
+    res.status(401).json({ message: '[AUTH] Invalid token' });
     return;
   }
 };
