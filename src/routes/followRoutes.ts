@@ -1,4 +1,4 @@
-import express from 'express';
+import { Router } from 'express';
 
 import {
   followUser,
@@ -8,7 +8,7 @@ import {
 } from '../controllers/followController';
 import { protect } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.post('/:userId/follow', protect, followUser);
 router.delete('/:userId/unfollow', protect, unfollowUser);

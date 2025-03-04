@@ -4,6 +4,8 @@ import express, { json } from 'express';
 import helmet from 'helmet';
 import http from 'http';
 import morgan from 'morgan';
+import swaggerJSDoc from 'swagger-jsdoc';
+import { serve, setup } from 'swagger-ui-express';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import connectDB from './config/db';
@@ -20,6 +22,18 @@ config();
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'PetPetLove API',
+      version: '1.0.0',
+    },
+  },
+  apis: ['./src/routes/*.ts', './src/docs/*.ts'],
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 const PORT = process.env.PORT || 5050;
 
@@ -77,6 +91,7 @@ app.use(morgan('dev'));
 app.use(requestLogger);
 app.use(responseMiddleware);
 
+app.use('/api-docs', serve, setup(swaggerSpec));
 app.use('/api/auth', authRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/block', blockRoutes);
