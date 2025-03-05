@@ -59,20 +59,24 @@ PetPetLove 不僅是一個寵物愛好者的社交平台，更是一個以公益
 
 ## 專案架構
 
+## 專案架構
+
+```bash
 PetPetLove
 │── src
-│ ├── controllers
-│ ├── models
-│ ├── routes
-│ ├── middlewares
-│ ├── services
-│ ├── config
-│ └── utils
+│   ├── controllers
+│   ├── models
+│   ├── routes
+│   ├── middlewares
+│   ├── services
+│   ├── config
+│   └── utils
 │── tests
 │── .env
 │── docker-compose.yml
 │── package.json
 │── README.md
+```
 
 ## 安裝與運行
 
